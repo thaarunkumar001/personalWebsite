@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Detect system preference or default to dark
   const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
   let theme = mediaQuery.matches ? 'light' : 'dark';
   setTheme(theme);
@@ -53,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ------------------------------------------------------------------------
-  // 2. Mobile Menu & Navigation
+  // 2. Mobile Navigation Overlay
   // ------------------------------------------------------------------------
   const mobileNavToggle = document.getElementById('mobile-nav-toggle');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
@@ -70,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileNavToggle.addEventListener('click', toggleMobileMenu);
   }
 
-  // Smooth Scrolling for Anchors
+  // Smooth Scroll Anchors
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
       const targetId = this.getAttribute('href');
@@ -78,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetElement = document.querySelector(targetId);
       if (targetElement) {
         e.preventDefault();
-        const headerOffset = 80;
+        const headerOffset = 70;
         const elementPosition = targetElement.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -95,81 +94,22 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ------------------------------------------------------------------------
-  // 3. Certifications Carousel Controls & Touch Events
-  // ------------------------------------------------------------------------
-  const viewport = document.getElementById('carousel-viewport');
-  const track = document.getElementById('carousel-track');
-  const slides = track ? track.querySelectorAll('.carousel-slide') : [];
-  const prevBtn = document.getElementById('carousel-prev');
-  const nextBtn = document.getElementById('carousel-next');
-  const indicatorsContainer = document.getElementById('carousel-indicators');
-  const dots = indicatorsContainer ? indicatorsContainer.querySelectorAll('.indicator-dot') : [];
-
-  function getActiveSlideIndex() {
-    if (!slides.length || !viewport) return 0;
-    const scrollLeft = viewport.scrollLeft;
-    const slideWidth = slides[0].getBoundingClientRect().width;
-    return Math.round(scrollLeft / (slideWidth + 24));
-  }
-
-  function updateCarouselUI() {
-    if (!viewport || !slides.length) return;
-    const scrollLeft = viewport.scrollLeft;
-    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
-
-    if (prevBtn) prevBtn.disabled = scrollLeft <= 10;
-    if (nextBtn) nextBtn.disabled = scrollLeft >= maxScroll - 10;
-
-    const activeIndex = getActiveSlideIndex();
-    dots.forEach((dot, index) => {
-      if (index === activeIndex) {
-        dot.classList.add('active');
-        dot.setAttribute('aria-current', 'true');
-      } else {
-        dot.classList.remove('active');
-        dot.removeAttribute('aria-current');
-      }
-    });
-  }
-
-  if (prevBtn && nextBtn && slides.length && viewport) {
-    prevBtn.addEventListener('click', () => {
-      const slideWidth = slides[0].getBoundingClientRect().width + 24;
-      viewport.scrollBy({ left: -slideWidth, behavior: 'smooth' });
-    });
-
-    nextBtn.addEventListener('click', () => {
-      const slideWidth = slides[0].getBoundingClientRect().width + 24;
-      viewport.scrollBy({ left: slideWidth, behavior: 'smooth' });
-    });
-
-    dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        const slideWidth = slides[0].getBoundingClientRect().width + 24;
-        viewport.scrollTo({ left: index * slideWidth, behavior: 'smooth' });
-      });
-    });
-
-    viewport.addEventListener('scroll', updateCarouselUI);
-    window.addEventListener('resize', updateCarouselUI);
-    updateCarouselUI();
-  }
-
-  // ------------------------------------------------------------------------
-  // 4. Reveal on Scroll Observer
+  // 3. Scroll Reveal & Card Flip Engine (Re-triggers every scroll)
   // ------------------------------------------------------------------------
   const revealItems = document.querySelectorAll('.reveal');
+  
   const observerOptions = {
     root: null,
-    rootMargin: '0px 0px -10% 0px',
-    threshold: 0.05
+    rootMargin: '0px 0px -50px 0px',
+    threshold: 0.15
   };
 
-  const observer = new IntersectionObserver((entries, observerInstance) => {
+  const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('active');
-        observerInstance.unobserve(entry.target);
+      } else {
+        entry.target.classList.remove('active');
       }
     });
   }, observerOptions);
@@ -177,6 +117,73 @@ document.addEventListener('DOMContentLoaded', () => {
   revealItems.forEach(item => {
     observer.observe(item);
   });
+
+  // ------------------------------------------------------------------------
+  // 4. Certifications Single-Card Carousel Engine (Swipe & Arrow Support)
+  // ------------------------------------------------------------------------
+  const track = document.getElementById('carousel-track');
+  const viewport = document.getElementById('carousel-viewport');
+  const prevBtn = document.getElementById('carousel-prev');
+  const nextBtn = document.getElementById('carousel-next');
+  const dots = document.querySelectorAll('.indicator-dot');
+  const slides = document.querySelectorAll('.carousel-slide');
+
+  let currentIndex = 0;
+  const totalSlides = slides.length;
+
+  function updateCarousel(index) {
+    if (!track || totalSlides === 0) return;
+
+    if (index < 0) {
+      currentIndex = totalSlides - 1;
+    } else if (index >= totalSlides) {
+      currentIndex = 0;
+    } else {
+      currentIndex = index;
+    }
+
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+      dot.setAttribute('aria-current', i === currentIndex ? 'true' : 'false');
+    });
+  }
+
+  // Button Controls
+  if (prevBtn) prevBtn.addEventListener('click', () => updateCarousel(currentIndex - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => updateCarousel(currentIndex + 1));
+
+  // Dot Controls
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => updateCarousel(index));
+  });
+
+  // Touch Swipe Support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (viewport) {
+    viewport.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    viewport.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+  }
+
+  function handleSwipe() {
+    const swipeThreshold = 40;
+    const diff = touchStartX - touchEndX;
+
+    if (diff > swipeThreshold) {
+      updateCarousel(currentIndex + 1); // Swiped Left -> Next Card
+    } else if (diff < -swipeThreshold) {
+      updateCarousel(currentIndex - 1); // Swiped Right -> Previous Card
+    }
+  }
 
   // ------------------------------------------------------------------------
   // 5. Back to Top Button

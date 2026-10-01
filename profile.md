@@ -98,7 +98,6 @@ Split the skills into 3 groups:
 
 #### Data & Platforms
 - Salesforce
-- Snowflake
 - Reporting
 - Process Automation
 - Platform Operations
@@ -106,10 +105,8 @@ Split the skills into 3 groups:
 #### AI/ML Growth Stack
 - Python
 - AI/ML Fundamentals
-- Cloud Learning
 - APIs
 - Integrations
-- Data Thinking
 
 ### 5. Projects
 Create 3 to 4 project cards that reinforce the transition into applied AI and technical problem-solving.
