@@ -1180,3 +1180,13 @@ section {
     transform: rotateX(0deg) translateY(0);
   }
 }
+
+.hero-profile-img {
+  width: 100%;
+  
+  object-fit: cover;
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: block;
+  margin: 0 auto;
+}
